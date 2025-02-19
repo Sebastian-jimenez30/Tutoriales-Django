@@ -22,7 +22,7 @@ class AboutPageView(TemplateView):
             "title": "About us - Online Store", 
             "subtitle": "About us", 
             "description": "This is an about page ...", 
-            "author": "Developed by: Juan Miguel", 
+            "author": "Developed by: Anderson Jimenez", 
         }) 
  
         return context
@@ -112,3 +112,50 @@ class ProductCreateView(View):
 
 class ProductCreatedView(TemplateView):
     template_name = 'products/created.html'
+
+
+class CartView(View):
+    template_name = 'cart/index.html'
+
+    def get(self, request):
+        # Obtener todos los productos de la base de datos
+        products = {
+            121: {'name': 'Tv Samsung', 'price': '1000'},
+            11: {'name': 'iPhone', 'price': '2000'}
+        }
+
+        # Obtener productos en el carrito desde la sesión
+        cart_product_data = request.session.get('cart_product_data', {})
+        cart_products = {int(key): products[int(key)] for key in cart_product_data if int(key) in products}
+
+        # Preparar datos para la vista
+        view_data = {
+            'title': 'Cart - Online Store',
+            'subtitle': 'Shopping Cart',
+            'products': products,
+            'cart_products': cart_products
+        }
+
+        return render(request, self.template_name, view_data)
+
+    def post(self, request, product_id):
+        # Obtener productos en el carrito desde la sesión
+        cart_product_data = request.session.get('cart_product_data', {})
+
+        # Agregar producto al carrito si no está ya agregado
+        cart_product_data[str(product_id)] = True  # Se usa `True` para indicar que el producto está en el carrito
+
+        # Guardar en sesión
+        request.session['cart_product_data'] = cart_product_data
+        request.session.modified = True  # Asegura que la sesión se actualice
+
+        return redirect('cart_index')
+
+
+
+class CartRemoveAllView(View):
+    def post(self, request):
+        # Remove all products from cart in session
+        if 'cart_product_data' in request.session:
+            del request.session['cart_product_data']
+        return redirect('cart_index')
